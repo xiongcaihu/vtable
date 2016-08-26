@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <link rel="stylesheet/less" type="text/css" href="css/vtable.less">
+    <style type="text/css">
+    .myStyle {}
+    
+    .myStyle2 {}
+    </style>
+</head>
+
+<body>
+    <h1 style="padding:10px;color:blue;">客户端模式：</h1>
+    <div class="vtable myStyle" id="vtable"></div>
+    <h1 style="padding:10px;color:blue;">自定义渲染列：</h1>
+    <div class="vtable myStyle" id="vtable2"></div>
+    <h1 style="padding:10px;color:blue;">配置自定意编辑框内容</h1>
+    <div class="vtable myStyle2" id="vtable3"></div>
+    <h1 style="padding:10px;color:blue;">服务端模式：</h1>
+    <div class="vtable" id="vtable4"></div>
+    <!--示例编辑框，如果有更复杂的需求，请重写此框，当然，可能你需要在此框中加入vue实例-->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">自定义窗口</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group" v-for="(item,index) in nowEditRow" v-show="thead[index].show!=false">
+                            <label class="control-label">{{"自定义--"+thead[index].name}}</label>
+                            <input type="text" class="form-control" v-model="item.value" @change="editColumn($event,index,item)">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">close</button>
+                    <button type="button" class="btn btn-primary" @click="saveButtonClick()">save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/vue2.js"></script>
+    <script type="text/javascript" src="js/less.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/vtable.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        //基础实例
+        $.ajax({
+            url: "http://localhost:3000/makeData",
+            type: "POST",
+            success: function(data) {
+                data.pageLength = 50;
+                data.edit = true;
+                data.url = "http://localhost:3000/makeData";
+                var vm = makeVtable(data);
+            }
+        });
+
+        //自定义渲染列
+        $.ajax({
+            url: "http://localhost:3000/makeData",
+            type: "POST",
+            success: function(data) {
+                data.pageLength = 50;
+                data.edit = true;
+                data.url = "http://localhost:3000/makeData";
+                data.el = "#vtable2";
+                //设置自定义渲染列,key为tbody中每个单元格的data值
+                data.renderColumn = {
+                    img: function() {
+                        //$value表示单元格原来的值，这里不能再嵌套{{}}表达式
+                        return "<img src='$value' width='20' height='20' />";
+                    },
+                    date: function() {
+                        return "重新渲染的时间=$value";
+                    }
+                }
+                var vm = makeVtable(data);
+
+            }
+        });
+
+        //自定义编辑框实例
+        $.ajax({
+            url: "http://localhost:3000/makeData",
+            type: "POST",
+            success: function(datas) {
+                datas.el = "#vtable3";
+                datas.pageLength = 50;
+                datas.edit = true;
+                datas.url = "http://localhost:3000/vtable";
+                var vm = makeVtable(datas);
+                // 如果需要在编辑框加入复杂逻辑，建议重写rowEdit方法，如下已经列出导入编辑框的必要数据
+                var myWindow;
+                vm.rowEdit = function(e, data) {
+                    var target = e.target; //铅笔对象
+                    var rowData = JSON.parse(JSON.stringify(data)); //对应行的数据(此处的作用是将之前的行数据复制过来)
+                    var columnData = vm.thead; //对应列的属性
+
+                    //重新打开编辑窗口时，需要给里面的变量赋值
+                    if (myWindow != undefined) {
+                        for (key in myWindow.nowEditRow) {
+                            myWindow.$set(myWindow.nowEditRow, key, rowData[key]);
+                        }
+                    } else { //初次打开
+                        myWindow = new Vue({
+                            el: "#exampleModal",
+                            data: {
+                                nowEditRow: rowData,
+                                thead: columnData
+                            },
+                            methods: {
+                                editColumn: function(e, data) {
+
+                                },
+                                saveButtonClick: function() {
+                                    //保存的时候需要把里面的数据都赋值给之前的变量
+                                    for (key in rowData) {
+                                        vm.$set(data, key, this.nowEditRow[key]);
+                                    }
+
+                                    if (vm.mode == "person") {
+                                        //如果是客户端，则saveEdit一下;
+                                        vm.saveEdit(data, vm);
+                                    } else {
+                                        //最后，如果是服务端模式，则需要更新一下数据
+                                        vm.reloadData(vm);
+                                    }
+                                    $("#exampleModal").modal("hide");
+                                }
+                            },
+                        });
+                    }
+                    //实例化完成后执行的函数
+                    myWindow.$nextTick(function() {
+                        $("#exampleModal").modal("show");
+                    });
+                }
+            }
+        });
+
+        //服务端模式实例
+        var vm = makeVtable({
+            el: "#vtable4",
+            url: "http://localhost:3000/vtable",
+            mode: "server",
+            edit: true,
+            pageLength: 50
+        });
+    });
+    </script>
+</body>
+
+</html>
