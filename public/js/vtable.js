@@ -14,6 +14,19 @@
                 <label>条</label>
             </div>
             <div class="form-group right">
+                <div class="btn-group" v-if="expandButton.show">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{expandButton.name}} <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li @click="addRow($event)"><a href="javascript:" >增加一行</a></li>
+                        <template v-for="(item,index) in expandButton.functions">
+                            <li role="separator" class="divider" v-show="index==0"></li>
+                            <li @click="createEvent(item,$event)"><a href="javascript:" >{{item.name}}</a></li>
+                            <li role="separator" class="divider" v-show="index!=expandButton.functions.length-1"></li>
+                        </template>
+                    </ul>
+                </div>
                 <input type="text" class="form-control" placeholder="输入内容搜索" @change="searchEvent($event)">
             </div>
         </form>
@@ -31,10 +44,10 @@
                 </thead>
                 <tbody>
                     <tr v-for="(item,index) in showRecord">
-                        <td v-show="edit"><span class="glyphicon glyphicon-pencil" @click="rowEdit($event,item)"></span>&nbsp;<span class="glyphicon glyphicon-trash" @click="rowDelete($event,item,index)"></span></td>
+                        <td v-show="edit"><span class="glyphicon glyphicon-pencil" @click="rowEdit($event,item)"></span>&nbsp;<span class="glyphicon glyphicon-trash" @click="rowDelete($event,item)"></span></td>
                         <td>{{index+1}}</td>
-                        <td v-for="(sub,index) in item" v-show="thead[index].show!=false"><span class="content" v-html="sub.value"></span>
-                            <input v-model="sub.value" @change="editCell($event,item)">
+                        <td v-for="(sub,index) in item.data" v-show="thead[index].show!=false"><span class="content" v-html="render(sub)"></span>
+                            <input @change="editCell($event,sub,item,thead[index])">
                         </td>
                     </tr>
                 </tbody>
@@ -70,7 +83,7 @@
                     </div>
                     <div class="modal-body">
                         <form>
-                            <div class="form-group" v-for="(item,index) in nowEditRow" v-show="thead[index].show!=false">
+                            <div class="form-group" v-for="(item,index) in nowEditRow.data" v-show="thead[index].show!=false">
                                 <label class="control-label">{{thead[index].name}}</label>
                                 <input type="text" class="form-control" v-model="item.value" @change="editColumn($event,index,item)">
                                 <span class="errorMsg" v-show="item.checkOk==false">类型错误</span>
@@ -102,6 +115,24 @@
         var vm = new Vue({
             el: table.el,
             data: table,
+            //实例创建时
+            created: function() {
+                if (this.mode == "server") {
+                    reloadData(this);
+                } else {
+                    //为每条数据生成rowId
+                    var body = this.orignBody;
+                    var randoms = makeRandomNumber(body.length);
+                    for (var i = 0; i < body.length; i++) {
+                        var rowObj = body[i];
+                        if (isEmpty(rowObj.rowId)) {
+                            rowObj.rowId = randoms[i];
+                        }
+                    }
+                    this.tbody = copyObj(this.orignBody);
+                    this.total = this.tbody.length;
+                }
+            },
             computed: {
                 startRecord: function() {
                     return (this.nowPage - 1) * parseInt(this.pageLength) + 1;
@@ -129,8 +160,8 @@
                         return end;
                     }
                 },
-                //处理数据
-                dealRecord: function() {
+                //展示的记录
+                showRecord: function() {
                     var pageLength = this.pageLength;
                     var total = this.totalRecord;
                     var tbody = this.tbody;
@@ -149,7 +180,9 @@
                                         value: "-"
                                     });
                                 }
-                                finalArray.push(emptyArray);
+                                finalArray.push({
+                                    data: emptyArray
+                                });
                             }
                         }
 
@@ -165,29 +198,13 @@
                                         value: "-"
                                     });
                                 }
-                                tbody.push(emptyArray);
+                                tbody.push({
+                                    data: emptyArray
+                                });
                             }
                         }
                         return tbody;
                     }
-                },
-                //展示的记录
-                showRecord: function() {
-                    var tbody = this.dealRecord;
-                    var renderObj = this.renderColumn;
-                    if(isEmpty(renderObj)){
-                        return tbody;
-                    }
-                    for (var i = 0; i < tbody.length; i++) {
-                        var row = tbody[i];
-                        for (var j = 0; j < row.length; j++) {
-                            var cell = row[j];
-                            if (!isEmpty(renderObj[cell.data])) {
-                                cell.value = renderObj[cell.data]().replace(/\$value/g, cell.value);
-                            }
-                        }
-                    }
-                    return tbody;
                 },
                 //按钮个数
                 buttons: function() {
@@ -237,6 +254,62 @@
                 }
             },
             methods: {
+                addRow: function(e) {
+                    var number = makeRandomNumber(1);
+                    var self = this;
+                    var newRow = {
+                        rowId: number[0],
+                        data: (function() {
+                            var row = [];
+                            for (var i = 0; i < self.thead.length; i++) {
+                                var cell = {
+                                    data: self.thead[i].data,
+                                    value: ""
+                                }
+                                row.push(cell);
+                            }
+                            return row;
+                        })()
+                    }
+
+                    if (self.mode == "server") {
+                        //保存到服务器后再渲染到当前tbody中
+                        saveEdit(newRow,self);
+                        self.tbody.unshift(newRow);
+                    } else {
+                        self.orignBody.unshift(newRow);
+
+                        self.tbody = copyObj(self.orignBody);
+                        self.total = self.tbody.length;
+                    }
+                },
+                createEvent: function(methodObj, e) {
+                    var method = methodObj.method.bind(this);
+                    method(e);
+                },
+                render: function(cell) {
+                    var renderColumn = this.renderColumn;
+
+                    if (!isEmpty(renderColumn) && !isEmpty(renderColumn[cell.data])) {
+                        return renderColumn[cell.data]().replace(/\$value/g, cell.value);
+                    } else {
+                        return cell.value;
+                    }
+                },
+                /**
+                 * 修改orignBody的行对象
+                 * @param  {[type]} rowId 修改的rowId
+                 * @param  {[type]} row   修改的行
+                 * @return {[type]}       [description]
+                 */
+                changeOrignBodyRow: function(row) {
+                    var rowId = row.rowId;
+                    var findItem = this.orignBody.find(function(v) {
+                        return v.rowId == rowId;
+                    });
+                    this.$set(findItem, "data", row.data);
+                    fixedVtableHead(this);
+                },
                 /**
                  * 表格所有点击事件总代理
                  * @param  {[type]} e [description]
@@ -255,8 +328,12 @@
                     } else if (targetName == "span" && className == "content") { //单元格点击事件
                         if (self.edit == false) return;
                         var content = $(target);
+                        if (content.html() == "-") {
+                            return;
+                        }
                         var input = $(target).siblings("input");
                         input.css("width", content.width() + "px");
+                        input.val(content.html());
 
                         content.hide();
                         input.one("blur", function() {
@@ -266,9 +343,21 @@
                         input.show().select();
                     }
                 },
-                editCell: function(e, data) {
-                    var saveData = data;
-                    saveEdit(saveData, this);
+                editCell: function(e, cell, row, column) {
+                    var target = e.target;
+                    var value = target.value;
+                    if (isEmpty(column.checkRegxp) || new RegExp(column.checkRegxp).test(value)) {
+                        cell.value = value;
+                    } else {
+                        return;
+                    }
+                    if (this.mode == "server") {
+                        saveEdit(row, this);
+                        reloadData(this);
+                    } else {
+                        //修改orignBody里的数据
+                        this.changeOrignBodyRow(row);
+                    }
                 },
                 pageLengthChange: function(e) {
                     var target = e.target;
@@ -335,19 +424,19 @@
                     }
 
                     if (isEmpty(searchContent)) {
-                        this.tbody = this.orignBody;
+                        this.tbody = copyObj(this.orignBody);
                         this.total = this.tbody.length;
                         this.nowPage = 1;
                         fixedVtableHead(this);
                         return;
                     }
 
-                    // //再根据搜索的内容来过滤
-                    var tbody = this.orignBody;
+                    //再根据搜索的内容来过滤
+                    var tbody = copyObj(this.orignBody);
                     var searchContent = this.searchObj.content;
 
                     tbody = tbody.filter(function(value) {
-                        return value.some(function(value) {
+                        return value.data.some(function(value) {
                             return value.value.toString().indexOf(searchContent) != -1;
                         });
                     });
@@ -362,56 +451,74 @@
                     var self = this;
                     var target = e.target;
                     var rowData = data;
+                    if (isEmpty(rowData.rowId)) {
+                        return;
+                    }
 
                     $(self.el + " #defaultWindow").one("shown.bs.modal", function() {
                         $(this).find(".modal-body").height(window.innerHeight * 0.6).css("overflow-y", "auto");
 
                         //为每个数据加上checkOk（是否符合自定意正则检测）的标志
-                        var newRowData = JSON.parse(JSON.stringify(rowData));
-                        for (key in newRowData) {
-                            if (isEmpty(newRowData[key].checkOk)) {
-                                newRowData[key].checkOk = true;
+                        var newRowData = copyObj(rowData);
+                        newRowData.data.filter(function(value, index, array) {
+                            if (isEmpty(value.checkOk)) {
+                                array[index].checkOk = true;
                             }
-                        }
+                            return true;
+                        });
+
                         self.nowEditRow = newRowData;
 
                         //编辑框中保存按钮的事件
-                        $(this).find("button[save]").on("click", function() {
+                        $(this).find("button[save]").off("click").on("click", function() {
                             //将form中的所有变量赋值给rowData
-                            for (key in rowData) {
-                                //检查是否都checkOk
-                                if (!self.nowEditRow[key].checkOk) {
-                                    return;
-                                }
-                                self.$set(rowData, key, self.nowEditRow[key]);
+                            var allCheckOk = self.nowEditRow.data.every(function(value) {
+                                return value.checkOk;
+                            });
+                            if (!allCheckOk) {
+                                return;
                             }
 
-                            saveEdit(rowData, self);
+                            if (self.mode == "server") {
+                                saveEdit(self.nowEditRow, self);
+                                reloadData(self);
+                            } else {
+                                self.$set(rowData, "data", self.nowEditRow.data);
+
+                                //修改orignBody里的数据
+                                self.changeOrignBodyRow(rowData);
+                            }
 
                             $(self.el + " #defaultWindow").modal("hide");
+
+                            self.$set(self, "nowEditRow", []);
                         });
                     }).modal("show");
                 },
-                rowDelete: function(e, data, index) {
+                rowDelete: function(e, data) {
                     var self = this;
                     var target = e.target;
-                    var rowData = data;
 
-                    var deleteObj = this.tbody[index];
-                    for (var i = 0; i < this.orignBody.length; i++) {
-                        var row = this.orignBody[i];
-
-                        if (deleteObj == row) {
-                            this.orignBody.splice(i, 1);
-                            break;
+                    if (self.mode == "server") {
+                        deleteRow(data, self);
+                    } else {
+                        //删除orignBody里的数据
+                        var rowId = data.rowId;
+                        if (isEmpty(rowId)) {
+                            return;
                         }
-                    }
-                    this.tbody.splice(index, 1);
+                        var findItemIndex = this.orignBody.findIndex(function(v) {
+                            return v.rowId == rowId;
+                        });
+                        this.orignBody.splice(findItemIndex, 1);
 
-                    deleteRow(data,self);
+                        findItemIndex = this.tbody.findIndex(function(v) {
+                            return v.rowId == rowId;
+                        });
+                        this.tbody.splice(findItemIndex, 1);
+                        this.total = this.tbody.length;
 
-                    if(self.mode=="server"){
-                        reloadData(self);
+                        fixedVtableHead(this);
                     }
                 },
                 jumpChange: function(e) {
@@ -460,14 +567,6 @@
                         cell.checkOk = true;
                     }
                 }
-            },
-            //实例创建时
-            created: function() {
-                if (this.mode == "server") {
-                    reloadData(this);
-                } else {
-                    this.total = this.tbody.length;
-                }
             }
         });
 
@@ -484,6 +583,43 @@
         });
 
         return vm;
+    }
+
+    /**
+     * 生成指定数量的随机数
+     * @param  {[type]} count [description]
+     * @return {[type]}       [description]
+     */
+    function makeRandomNumber(count) {
+        var numberMap = {};
+        var numberArray = [];
+
+        (function(count) {
+            var arg = arguments;
+
+            if (count == 0) return;
+
+            var number = Math.random().toString().slice(2, 15);
+            if (numberMap["_" + number] == undefined) {
+                numberMap["_" + number] = number;
+                numberArray.push(number);
+                count--;
+            }
+
+            arg.callee(count);
+
+        })(count);
+
+        return numberArray;
+    }
+
+    /**
+     * 复制对象
+     * @param  {[type]} obj [description]
+     * @return {[type]}     [description]
+     */
+    function copyObj(obj) {
+        return JSON.parse(JSON.stringify(obj));
     }
 
     function fixedVtableHead(vm) {
@@ -520,7 +656,7 @@
                     data: JSON.stringify(sendData)
                 },
                 success: function(data) {
-
+                    reloadData(self);
                 }
             });
         }
@@ -535,11 +671,8 @@
      * @param  {[type]} vm   [description]
      * @return {[type]}      [description]
      */
-    function saveEdit(data, vm) {
+    function saveEdit(row, vm) {
         var self = vm;
-        var sendData = {
-            data: data
-        };
 
         if (isEmpty(self.url)) {
             console.warn("未设置保存的url");
@@ -548,10 +681,11 @@
                 url: self.url,
                 type: "PUT",
                 data: {
-                    data: JSON.stringify(sendData)
+                    data: JSON.stringify(row)
                 },
                 success: function(data) {
-
+                    var newRow = JSON.parse(data);
+                    vm.$set(row, "data", newRow.data);
                 }
             });
         }
@@ -573,14 +707,15 @@
             console.error("thead配置错误");
             return false;
         }
-        table.tbody = vtableConfig.tbody || [
-            [{ value: "noData" }]
+        table.orignBody = vtableConfig.tbody || [
+            { data: [{ value: "noData" }] }
         ];
-        if (!(table.tbody instanceof Array) || !(table.tbody[0] instanceof Array) || !(typeof table.tbody[0][0] == "object")) {
+        if (!(table.orignBody instanceof Array) || !(typeof table.orignBody[0] == "object")) {
             console.error("tbody配置错误");
             return false;
         }
-        table.orignBody = table.tbody;
+        table.tbody = copyObj(table.orignBody);
+        // table.orignBody = table.tbody;
         table.edit = isEmpty(vtableConfig.edit) ? false : vtableConfig.edit; //是否开启编辑模式
         table.mode = vtableConfig.mode || "person"; //两种模式，客户端模式（person），服务器端模式（server）
         if (!(typeof table.mode == "string") || (table.mode != "person" && table.mode != "server")) {
@@ -597,7 +732,7 @@
             console.error("searchObj配置错误");
             return false;
         }
-        table.sortObj = vtableConfig.sortObj || [{ columnIndex: 0, sortWay: "asc" }]; //排序字段
+        table.sortObj = vtableConfig.sortObj || [{ columnIndex: 0, sortWay: "asc", data: "" }]; //排序字段
         if (!(table.sortObj instanceof Array) || !(typeof table.sortObj == "object")) {
             console.error("sortObj配置错误");
             return false;
@@ -631,6 +766,21 @@
         table.nowEditRow = []; //当前编辑的行
         table.fixedHead = isEmpty(vtableConfig.fixedHead) ? true : vtableConfig.fixedHead;
         table.renderColumn = vtableConfig.renderColumn || undefined; //过滤设置
+        table.expandButton = vtableConfig.expandButton || { //扩展按钮
+            name: "功能菜单",
+            show: true,
+            functions: [{
+                name: "我的扩展按钮1",
+                method: function(e) {
+                    console.dir(this);
+                }
+            }, {
+                name: "我的扩展按钮2",
+                method: function(e) {
+                    console.dir(this);
+                }
+            }]
+        };
         return table;
     }
 
@@ -673,6 +823,14 @@
                 self.sortObj = data.sortObj;
                 self.searchObj = data.searchObj;
 
+                var randoms = makeRandomNumber(self.tbody.length);
+                for (var i = 0; i < self.tbody.length; i++) {
+                    var rowObj = self.tbody[i];
+                    if (isEmpty(rowObj.rowId)) {
+                        rowObj.rowId = randoms[i];
+                    }
+                }
+
                 $(self.el + " .tableContainer .shadow").remove();
 
                 //重新调整固定表头
@@ -696,7 +854,8 @@
 
         self.$set(self, "sortObj", [{
             columnIndex: target.cellIndex - 2,
-            sortWay: sortWay == "desc" ? "asc" : "desc"
+            sortWay: sortWay == "desc" ? "asc" : "desc",
+            data: self.thead[target.cellIndex - 2]
         }]);
 
         if (self.mode == "server") {
@@ -709,8 +868,8 @@
         var sortColumnIndex = self.sortObj[0].columnIndex;
         var sortWay = self.sortObj[0].sortWay;
         self.tbody.sort(function(a, b) {
-            var avalue = a[sortColumnIndex].value;
-            var bvalue = b[sortColumnIndex].value;
+            var avalue = a.data[sortColumnIndex].value;
+            var bvalue = b.data[sortColumnIndex].value;
 
             //判断类型
             if (/^[0-9]*$/.test(avalue) && /^[0-9]*$/.test(bvalue)) { //整数
@@ -848,7 +1007,7 @@
     }
 
     function isEmpty(obj) {
-        if(typeof obj=="function"){
+        if (typeof obj == "function") {
             return false;
         }
         if (obj == undefined || obj == null || (typeof obj) == "undefined" || obj.length <= 0 || obj.toString() == "NaN") {

@@ -17,9 +17,9 @@
 <body>
     <h1 style="padding:10px;color:blue;">客户端模式：</h1>
     <div class="vtable myStyle" id="vtable"></div>
-    <h1 style="padding:10px;color:blue;">自定义渲染列：</h1>
+    <h1 style="padding:10px;color:blue;">客户端自定义渲染列：</h1>
     <div class="vtable myStyle" id="vtable2"></div>
-    <h1 style="padding:10px;color:blue;">配置自定意编辑框内容</h1>
+    <h1 style="padding:10px;color:blue;">客户端配置自定意编辑框内容</h1>
     <div class="vtable myStyle2" id="vtable3"></div>
     <h1 style="padding:10px;color:blue;">服务端模式：</h1>
     <div class="vtable" id="vtable4"></div>
@@ -33,15 +33,15 @@
                 </div>
                 <div class="modal-body">
                     <form>
-                        <div class="form-group" v-for="(item,index) in nowEditRow" v-show="thead[index].show!=false">
+                        <div class="form-group" v-for="(item,index) in nowEditRow.data" v-show="thead[index].show!=false">
                             <label class="control-label">{{"自定义--"+thead[index].name}}</label>
-                            <input type="text" class="form-control" v-model="item.value" @change="editColumn($event,index,item)">
+                            <input type="text" class="form-control" v-model="item.value" @change="editInput($event,item)">
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">close</button>
-                    <button type="button" class="btn btn-primary" @click="saveButtonClick()">save</button>
+                    <button type="button" class="btn btn-primary" @click="saveButtonClick($event)">save</button>
                 </div>
             </div>
         </div>
@@ -89,7 +89,10 @@
             }
         });
 
-        //自定义编辑框实例
+        /**
+         * 自定义编辑框实例
+         * 如果需要在编辑框加入复杂逻辑，建议重写rowEdit方法，如下已经列出导入编辑框的必要数据
+         */
         $.ajax({
             url: "http://localhost:3000/makeData",
             type: "POST",
@@ -98,19 +101,17 @@
                 datas.pageLength = 50;
                 datas.edit = true;
                 datas.url = "http://localhost:3000/vtable";
+                datas.mode = "server";
                 var vm = makeVtable(datas);
-                // 如果需要在编辑框加入复杂逻辑，建议重写rowEdit方法，如下已经列出导入编辑框的必要数据
                 var myWindow;
-                vm.rowEdit = function(e, data) {
-                    var target = e.target; //铅笔对象
-                    var rowData = JSON.parse(JSON.stringify(data)); //对应行的数据(此处的作用是将之前的行数据复制过来)
+                vm.rowEdit = function(e, row) {
+                    var target = e.target; //表格中的铅笔对象
+                    var rowData = JSON.parse(JSON.stringify(row)); //对应行的数据(此处的作用是将之前的行数据复制过来)
                     var columnData = vm.thead; //对应列的属性
 
                     //重新打开编辑窗口时，需要给里面的变量赋值
                     if (myWindow != undefined) {
-                        for (key in myWindow.nowEditRow) {
-                            myWindow.$set(myWindow.nowEditRow, key, rowData[key]);
-                        }
+                        myWindow.$set(myWindow, "nowEditRow", rowData);
                     } else { //初次打开
                         myWindow = new Vue({
                             el: "#exampleModal",
@@ -118,29 +119,27 @@
                                 nowEditRow: rowData,
                                 thead: columnData
                             },
-                            methods: {
-                                editColumn: function(e, data) {
-
-                                },
-                                saveButtonClick: function() {
-                                    //保存的时候需要把里面的数据都赋值给之前的变量
-                                    for (key in rowData) {
-                                        vm.$set(data, key, this.nowEditRow[key]);
-                                    }
-
-                                    if (vm.mode == "person") {
-                                        //如果是客户端，则saveEdit一下;
-                                        vm.saveEdit(data, vm);
-                                    } else {
-                                        //最后，如果是服务端模式，则需要更新一下数据
-                                        vm.reloadData(vm);
-                                    }
-                                    $("#exampleModal").modal("hide");
-                                }
-                            },
                         });
                     }
-                    //实例化完成后执行的函数
+                    //单元格编辑
+                    myWindow.editInput = function(e, item) {
+
+                    };
+                    myWindow.saveButtonClick = function(e) {
+                            if (vm.mode == "person") {
+                                //保存的时候需要把里面的数据都赋值给之前的变量
+                                vm.$set(row, "data", this.nowEditRow.data);
+                                //另外如果是客户端需要改变一下最原始的数据
+                                vm.changeOrignBodyRow(this.nowEditRow);
+                            } else {
+                                //如果是服务端模式，则需要更新一下数据
+                                vm.saveEdit(this.nowEditRow, vm);
+                                vm.reloadData(vm);
+                            }
+                            this.$set(this, "nowEditRow", {});
+                            $("#exampleModal").modal("hide");
+                        }
+                        //实例化完成后执行的函数
                     myWindow.$nextTick(function() {
                         $("#exampleModal").modal("show");
                     });
