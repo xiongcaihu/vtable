@@ -12,6 +12,3 @@
 4. 键入 hotnode ./bin/www 
 5. 看到绿色 hotnode  node process restarted 字样表示成功启动
 6. 浏览器输入localhost:3000/index.html查看效果
-
-
-
