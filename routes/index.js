@@ -3,7 +3,7 @@ var router = express.Router();
 var Mock = require('mockjs');
 
 //传递给客户端模式表格的数据
-router.post('/makeData', function(req, res, next) {
+router.get('/makeData', function(req, res, next) {
     var returnData = {
         el: "#vtable",
         "tbody": function() {
@@ -46,6 +46,7 @@ router.post('/makeData', function(req, res, next) {
             "show": false,
             "dataType": "int", //数据类型，int,float,boolean,string,text,date
             "checkRegxp": "^[0-9]*$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "只能输入整数",
         }, {
             "data": "name",
             "name": "name",
@@ -66,16 +67,19 @@ router.post('/makeData', function(req, res, next) {
             "name": "date",
             "dataType": "date",
             "checkRegxp": "^[1-9][0-9]{3}-[0-9]{1,2}-[0-9]{1,2}$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "只能输入****-**-**格式的日期",
         }, {
             "data": "start_date",
             "name": "start_date",
             "dataType": "date",
             "checkRegxp": "^[1-9][0-9]{3}-[0-9]{1,2}-[0-9]{1,2}$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "只能输入****-**-**格式的日期",
         }, {
             "data": "salary",
             "name": "salary",
             "dataType": "float",
             "checkRegxp": "^[0-9]*[.]{0,}[0-9]{0,2}$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "仅限小数或整数",
         }],
     };
 
@@ -101,7 +105,7 @@ router.delete('/vtable', function(req, res, next) {
 
 //接收服务端模式下的表格修改的单条数据
 router.put('/vtable', function(req, res, next) {
-    var obj=JSON.parse(req.body.data);
+    var obj = JSON.parse(req.body.data);
     console.log(obj);
 
     res.send(JSON.stringify(obj));
@@ -122,7 +126,7 @@ router.post('/vtable', function(req, res, next) {
         "tbody": function() {
             var Random = Mock.Random;
             var array = [];
-            for (var i = 0; i < 50; i++) {
+            for (var i = 0; i < pageLength; i++) {
                 var item = [{
                     "data": "id",
                     "value": Random.integer(1, 10000),
@@ -140,14 +144,14 @@ router.post('/vtable', function(req, res, next) {
                     "value": Random.date(),
                 }, {
                     "data": "start_date",
-                    "value": Random.string(),
+                    "value": Random.date(),
                 }, {
                     "data": "salary",
                     "value": Random.integer(500, 1000)
                 }];
 
                 array.push({
-                	data:item
+                    data: item
                 });
             }
 
@@ -163,6 +167,7 @@ router.post('/vtable', function(req, res, next) {
             "show": false,
             "dataType": "int", //数据类型，int,float,boolean,string,text,date
             "checkRegxp": "^[0-9]*$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "只能输入整数",
         }, {
             "data": "name",
             "name": "name",
@@ -183,16 +188,19 @@ router.post('/vtable', function(req, res, next) {
             "name": "date",
             "dataType": "date",
             "checkRegxp": "^[1-9][0-9]{3}-[0-9]{1,2}-[0-9]{1,2}$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "只能输入****-**-**格式的日期",
         }, {
             "data": "start_date",
             "name": "start_date",
             "dataType": "date",
             "checkRegxp": "^[1-9][0-9]{3}-[0-9]{1,2}-[0-9]{1,2}$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "只能输入****-**-**格式的日期",
         }, {
             "data": "salary",
             "name": "salary",
             "dataType": "float",
             "checkRegxp": "^[0-9]*[.]{0,}[0-9]{0,2}$", //检验规则，适用于在form中做输入的检查
+            "errorMsg": "仅限小数或整数",
         }],
     };
 

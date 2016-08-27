@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>服务端配置</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <!-- <link rel="stylesheet/less" type="text/css" href="css/vtable.less"> -->
+    <link rel="stylesheet" type="text/css" href="css/vtable.css">
+    <style type="text/css">
+    h1,
+    h2 {
+        padding-left: 10px;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h1>服务端配置</h1>
+        <h2><small>这里加载比较慢是因为本人在服务端设置了延时，方便区分加载效果</small></h2>
+    </div>
+    <div class="vtable" id="vtable"></div>
+    
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/vue2.js"></script>
+    <script type="text/javascript" src="js/less.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/vtable.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        //服务端模式实例
+        var vm = makeVtable({
+            el: "#vtable",
+            url: "http://localhost:3000/vtable",
+            mode: "server",
+            edit:true,
+            tableContainerMaxHeight:window.innerHeight*0.5,
+            pageLength: 50
+        });
+    });
+    </script>
+</body>
+
+</html>

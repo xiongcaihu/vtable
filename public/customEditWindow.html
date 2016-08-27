@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>自定义编辑框</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <!-- <link rel="stylesheet/less" type="text/css" href="css/vtable.less"> -->
+    <link rel="stylesheet" type="text/css" href="css/vtable.css">
+    <style type="text/css">
+    h1,
+    h2 {
+        padding-left: 10px;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h1>自定义编辑框</h1>
+        <h2><small>定制化的编辑窗口，适用于复杂逻辑情况</small></h2>
+    </div>
+    <!--带上基本的样式：vtable，并指定id-->
+    <div class="vtable" id="vtable"></div>
+    <!--示例编辑框，如果有更复杂的需求，请重写此框，当然，可能你需要在此框中加入vue实例-->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">自定义窗口</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group" v-for="(item,index) in nowEditRow.data" v-show="thead[index].show!=false">
+                            <label class="control-label">{{"自定义--"+thead[index].name}}</label>
+                            <input type="text" class="form-control" v-model="item.value" @change="editInput($event,item)">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">close</button>
+                    <button type="button" class="btn btn-primary" @click="saveButtonClick($event)">save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/vue2.js"></script>
+    <script type="text/javascript" src="js/less.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/vtable.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        //基础实例
+        $.ajax({
+            url: "data/data.json",
+            success: function(data) {
+                //基本配置
+                // data.thead;//表头数据
+                // data.tbody;//表体数据
+                data.edit = true; //是否开启编辑模式,default=false;
+                //data.mode;//客户端模式或者服务端模式，default=person,other=server
+                //data.url;//如果开启服务端模式，则url需要指定
+                //data.nowPage;//当前显示第几页,default=1
+                //data.pageMenu;//每页显示多少条数据,default=[10,20,50,100]
+                //data.buttonCount;//每组按钮的个数，default=5
+                //data.fixedHead;//是否开启固定表头功能，default=true
+                data.pageLength = 20; //当前每页显示多少条
+                data.el = "#vtable"; //对应的id
+                data.tableContainerMaxHeight = window.innerHeight * 0.5; //表格的最大高度
+                var vm = makeVtable(data); //返回一个该表格对应的vue实例
+
+                defineCustomWindow(vm);
+            }
+        });
+
+        function defineCustomWindow(vm) {
+            var myWindow;
+            vm.rowEdit = function(e, row) {
+                //表格中的铅笔对象
+                var target = e.target;
+                //对应行的数据(此处的作用是将之前的行数据复制过来)
+                var rowData = JSON.parse(JSON.stringify(row));
+                //对应列的属性
+                var columnData = vm.thead;
+
+                //重新打开编辑窗口时，需要给里面的变量赋值
+                if (myWindow != undefined) {
+                    myWindow.$set(myWindow, "nowEditRow", rowData);
+                } else { //初次打开
+                    myWindow = new Vue({
+                        el: "#exampleModal",
+                        data: {
+                            nowEditRow: rowData,
+                            thead: columnData
+                        },
+                    });
+                }
+                //单元格编辑
+                myWindow.editInput = function(e, item) {
+
+                };
+                myWindow.saveButtonClick = function(e) {
+                        if (vm.mode == "person") {
+                            //保存的时候需要把里面的数据都赋值给之前的变量
+                            vm.$set(row, "data", this.nowEditRow.data);
+                            //另外如果是客户端需要改变一下最原始的数据
+                            vm.changeOrignBodyRow(this.nowEditRow);
+                        } else {
+                            //如果是服务端模式，则需要更新一下数据
+                            vm.saveEdit(this.nowEditRow, vm);
+                            vm.reloadData(vm);
+                        }
+                        this.$set(this, "nowEditRow", {});
+                        $("#exampleModal").modal("hide");
+                    }
+                    //实例化完成后执行的函数
+                myWindow.$nextTick(function() {
+                    $("#exampleModal").modal("show");
+                });
+            }
+        }
+    });
+    </script>
+</body>
+
+</html>

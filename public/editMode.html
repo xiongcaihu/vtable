@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>编辑模式</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <!-- <link rel="stylesheet/less" type="text/css" href="css/vtable.less"> -->
+    <link rel="stylesheet" type="text/css" href="css/vtable.css">
+    <style type="text/css">
+    h1 {
+        padding-left: 10px;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h1>编辑模式</h1>
+    </div>
+    <!--带上基本的样式：vtable，并指定id-->
+    <div class="vtable" id="vtable"></div>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/vue2.js"></script>
+    <script type="text/javascript" src="js/less.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/vtable.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        //基础实例
+        $.ajax({
+            url: "data/data.json",
+            success: function(data) {
+                //基本配置
+                // data.thead;//表头数据
+                // data.tbody;//表体数据
+                data.edit=true;//是否开启编辑模式,default=false;
+                //data.mode;//客户端模式或者服务端模式，default=person,other=server
+                //data.url;//如果开启服务端模式，则url需要指定
+                //data.nowPage;//当前显示第几页,default=1
+                //data.pageMenu;//每页显示多少条数据,default=[10,20,50,100]
+                //data.buttonCount;//每组按钮的个数，default=5
+                //data.fixedHead;//是否开启固定表头功能，default=true
+                data.pageLength = 20;//当前每页显示多少条
+                data.el="#vtable";//对应的id
+                data.tableContainerMaxHeight=window.innerHeight*0.5;//表格的最大高度
+                var vm = makeVtable(data);//返回一个该表格对应的vue实例
+            }
+        });
+    });
+    </script>
+</body>
+
+</html>

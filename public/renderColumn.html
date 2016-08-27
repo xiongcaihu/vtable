@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>自定义列渲染</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <!-- <link rel="stylesheet/less" type="text/css" href="css/vtable.less"> -->
+    <link rel="stylesheet" type="text/css" href="css/vtable.css">
+    <style type="text/css">
+    h1 {
+        padding-left: 10px;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h1>自定义列渲染</h1>
+    </div>
+    <div class="vtable" id="vtable"></div>
+    
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/vue2.js"></script>
+    <script type="text/javascript" src="js/less.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/vtable.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        //自定义渲染列
+        $.ajax({
+            url: "data/data.json",
+            success: function(data) {
+                data.pageLength = 50;
+                data.el = "#vtable";
+                data.tableContainerMaxHeight=window.innerHeight*0.5;//表格的最大高度
+                //设置自定义渲染列,key为tbody中每个单元格的data值
+                data.renderColumn = {
+                    img: function() {
+                        //$value表示单元格原来的值，这里不能再嵌套{{}}表达式
+                        return "<img src='$value' width='20' height='20' />";
+                    },
+                    date: function() {
+                        return "重新渲染的时间=$value";
+                    }
+                }
+                var vm = makeVtable(data);
+            }
+        });
+        
+    });
+    </script>
+</body>
+
+</html>

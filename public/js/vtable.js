@@ -1,102 +1,6 @@
-(function() {
+(function () {
     //要插入的内容
-    var innerHTML = `
-        <!--顶部-->
-        <form class="form-inline tools" onSubmit="return false">
-            <div class="form-group left">
-                <label>每页</label>
-                <select class="form-control input-sm" @change="pageLengthChange($event)">
-                    <template v-for="(item,index) in pageMenu">
-                        <option v-if="item == pageLength" :value="item" selected="true">{{item}}</option>
-                        <option v-else :value="item">{{item}}</option>
-                    </template>
-                </select>
-                <label>条</label>
-            </div>
-            <div class="form-group right">
-                <div class="btn-group" v-if="expandButton.show">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        {{expandButton.name}} <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li @click="addRow($event)"><a href="javascript:" >增加一行</a></li>
-                        <template v-for="(item,index) in expandButton.functions">
-                            <li role="separator" class="divider" v-show="index==0"></li>
-                            <li @click="createEvent(item,$event)"><a href="javascript:" >{{item.name}}</a></li>
-                            <li role="separator" class="divider" v-show="index!=expandButton.functions.length-1"></li>
-                        </template>
-                    </ul>
-                </div>
-                <input type="text" class="form-control" placeholder="输入内容搜索" @change="searchEvent($event)">
-            </div>
-        </form>
-         <!--表-->
-        <div class="tableContainer">
-            <table class="table table-bordered" @click="tableClickPoxy($event)">
-                <thead>
-                    <tr>
-                        <td v-show="edit" class="column operate">操作</td>
-                        <td class="column index">序号</td>
-                        <td class="column" v-for="(item,index) in thead" v-show="item.show!=false"><span :class="index==sortObj[0].columnIndex && sortObj[0].sortWay=='asc'?'sortIcon asc active':'sortIcon asc'">&uarr;</span>
-                            <span :class="index==sortObj[0].columnIndex && sortObj[0].sortWay=='desc'?'sortIcon desc active':'sortIcon desc'">&darr;</span> {{item.name}}
-                        </td>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(item,index) in showRecord">
-                        <td v-show="edit"><span class="glyphicon glyphicon-pencil" @click="rowEdit($event,item)"></span>&nbsp;<span class="glyphicon glyphicon-trash" @click="rowDelete($event,item)"></span></td>
-                        <td>{{index+1}}</td>
-                        <td v-for="(sub,index) in item.data" v-show="thead[index].show!=false"><span class="content" v-html="render(sub)"></span>
-                            <input @change="editCell($event,sub,item,thead[index])">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <!--底部工具栏-->
-        <div class="footer">
-            <div class="left">
-                <label>显示 {{startRecord}} - {{endRecord}} 条，共 {{totalRecord}} 条</label>
-            </div>
-            <div class="right">
-                <div class="btn-group" role="group" aria-label="..." @click="buttonGroupClick($event)">
-                    <button type="button" class="btn btn-default" data-position="first">&laquo;
-                    </button>
-                    <button type="button" class="btn btn-default" data-position="prev">&lt;</button>
-                    <template v-for="item in nowButtonGroup">
-                        <button type="button" :class="nowPage==item.name?'btn btn-default btn-primary':'btn btn-default'" :data-position="item.name">{{item.name}}</button>
-                    </template>
-                    <button type="button" class="btn btn-default" data-position="next">&gt;</button>
-                    <button type="button" class="btn btn-default" data-position="end">&raquo;</button>
-                </div>
-                <div class="jumpTo">跳转到&nbsp;
-                    <input type="number" value="1" min="1" :max="buttons" @change="jumpChange($event)" />&nbsp;页</div>
-            </div>
-        </div>
-        <!--表单-->
-        <div class="modal fade" id="defaultWindow" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="exampleModalLabel">编辑</h4>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="form-group" v-for="(item,index) in nowEditRow.data" v-show="thead[index].show!=false">
-                                <label class="control-label">{{thead[index].name}}</label>
-                                <input type="text" class="form-control" v-model="item.value" @change="editColumn($event,index,item)">
-                                <span class="errorMsg" v-show="item.checkOk==false">类型错误</span>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary" save>确定</button>
-                    </div>
-                </div>
-            </div>
-        </div>`;
+    var innerHTML = "\n        <!--顶部-->\n        <form class=\"form-inline tools\" onSubmit=\"return false\">\n            <div class=\"form-group left\">\n                <label>每页</label>\n                <select class=\"form-control input-sm\" @change=\"pageLengthChange($event)\">\n                    <template v-for=\"(item,index) in pageMenu\">\n                        <option v-if=\"item == pageLength\" :value=\"item\" selected=\"true\">{{item}}</option>\n                        <option v-else :value=\"item\">{{item}}</option>\n                    </template>\n                </select>\n                <label>条</label>\n            </div>\n            <div class=\"form-group right\">\n                <div class=\"btn-group\" v-if=\"expandButton.show\">\n                    <button type=\"button\" class=\"btn btn-primary dropdown-toggle\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n                        {{expandButton.name}} <span class=\"caret\"></span>\n                    </button>\n                    <ul class=\"dropdown-menu\">\n                        <li @click=\"addRow($event)\" v-if=\"edit\"><a href=\"javascript:\" >增加一行</a></li>\n                        <template v-for=\"(item,index) in expandButton.functions\">\n                            <li role=\"separator\" class=\"divider\" v-show=\"index==0 && edit\"></li>\n                            <li @click=\"createEvent(item,$event)\"><a href=\"javascript:\" >{{item.name}}</a></li>\n                            <li role=\"separator\" class=\"divider\" v-show=\"index!=expandButton.functions.length-1\"></li>\n                        </template>\n                    </ul>\n                </div>\n                <input type=\"text\" class=\"form-control\" placeholder=\"输入内容搜索\" @change=\"searchEvent($event)\">\n            </div>\n        </form>\n         <!--表-->\n        <div class=\"tableContainer\">\n            <table class=\"table table-bordered\" @click=\"tableClickPoxy($event)\">\n                <thead>\n                    <tr>\n                        <td v-show=\"edit\" class=\"column operate\">操作</td>\n                        <td class=\"column index\">序号</td>\n                        <td class=\"column\" v-for=\"(item,index) in thead\" v-show=\"item.show!=false\"><span :class=\"index==sortObj[0].columnIndex && sortObj[0].sortWay=='asc'?'sortIcon asc active':'sortIcon asc'\">&uarr;</span>\n                            <span :class=\"index==sortObj[0].columnIndex && sortObj[0].sortWay=='desc'?'sortIcon desc active':'sortIcon desc'\">&darr;</span> {{item.name}}\n                        </td>\n                    </tr>\n                </thead>\n                <tbody>\n                    <tr v-for=\"(item,index) in showRecord\">\n                        <td v-show=\"edit\"><span class=\"glyphicon glyphicon-pencil\" @click=\"rowEdit($event,item)\"></span>&nbsp;<span class=\"glyphicon glyphicon-trash\" @click=\"rowDelete($event,item)\"></span></td>\n                        <td>{{index+1}}</td>\n                        <td v-for=\"(sub,index) in item.data\" v-show=\"thead[index].show!=false\"><span class=\"content\" v-html=\"render(sub)\"></span>\n                            <input @change=\"editCell($event,sub,item,thead[index])\">\n                        </td>\n                    </tr>\n                </tbody>\n            </table>\n        </div>\n        <!--底部工具栏-->\n        <div class=\"footer\">\n            <div class=\"left\">\n                <label>显示 {{startRecord}} - {{endRecord}} 条，共 {{totalRecord}} 条</label>\n            </div>\n            <div class=\"right\">\n                <div class=\"btn-group\" role=\"group\" aria-label=\"...\" @click=\"buttonGroupClick($event)\">\n                    <button type=\"button\" class=\"btn btn-default\" data-position=\"first\">&laquo;\n                    </button>\n                    <button type=\"button\" class=\"btn btn-default\" data-position=\"prev\">&lt;</button>\n                    <template v-for=\"item in nowButtonGroup\">\n                        <button type=\"button\" :class=\"nowPage==item.name?'btn btn-default btn-primary':'btn btn-default'\" :data-position=\"item.name\">{{item.name}}</button>\n                    </template>\n                    <button type=\"button\" class=\"btn btn-default\" data-position=\"next\">&gt;</button>\n                    <button type=\"button\" class=\"btn btn-default\" data-position=\"end\">&raquo;</button>\n                </div>\n                <div class=\"jumpTo\">跳转到&nbsp;\n                    <input class=\"form-control\" type=\"number\" value=\"1\" min=\"1\" :max=\"buttons\" @change=\"jumpChange($event)\" />&nbsp;页</div>\n                </div>\n        </div>\n        <!--表单-->\n        <div class=\"modal fade\" id=\"defaultWindow\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\">\n            <div class=\"modal-dialog\" role=\"document\">\n                <div class=\"modal-content\">\n                    <div class=\"modal-header\">\n                        <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button>\n                        <h4 class=\"modal-title\" id=\"exampleModalLabel\">编辑</h4>\n                    </div>\n                    <div class=\"modal-body\">\n                        <form>\n                            <div class=\"form-group\" v-for=\"(item,index) in nowEditRow.data\" v-show=\"thead[index].show!=false\">\n                                <label class=\"control-label\">{{thead[index].name}}</label>\n                                <input type=\"text\" class=\"form-control\" v-model=\"item.value\" @change=\"editColumn($event,index,item)\">\n                                <span class=\"errorMsg\" v-show=\"item.checkOk==false\">{{thead[index].errorMsg}}</span>\n                            </div>\n                        </form>\n                    </div>\n                    <div class=\"modal-footer\">\n                        <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">取消</button>\n                        <button type=\"button\" class=\"btn btn-primary\" save>确定</button>\n                    </div>\n                </div>\n            </div>\n        </div>";
 
     function makeVtable(vtableConfig) {
         var element = document.querySelector(vtableConfig.el);
@@ -116,7 +20,7 @@
             el: table.el,
             data: table,
             //实例创建时
-            created: function() {
+            created: function created() {
                 if (this.mode == "server") {
                     reloadData(this);
                 } else {
@@ -134,11 +38,11 @@
                 }
             },
             computed: {
-                startRecord: function() {
+                startRecord: function startRecord() {
                     return (this.nowPage - 1) * parseInt(this.pageLength) + 1;
                 },
                 //总记录
-                totalRecord: function() {
+                totalRecord: function totalRecord() {
                     var mode = this.mode;
                     if (mode == "person") {
                         this.total = this.total || 1;
@@ -148,7 +52,7 @@
                     }
                 },
                 //当页最后一条记录
-                endRecord: function() {
+                endRecord: function endRecord() {
                     var pageLength = this.pageLength;
                     var total = this.totalRecord;
                     var startRecord = parseInt(this.startRecord);
@@ -161,7 +65,7 @@
                     }
                 },
                 //展示的记录
-                showRecord: function() {
+                showRecord: function showRecord() {
                     var pageLength = this.pageLength;
                     var total = this.totalRecord;
                     var tbody = this.tbody;
@@ -207,7 +111,7 @@
                     }
                 },
                 //按钮个数
-                buttons: function() {
+                buttons: function buttons() {
                     var total = this.totalRecord;
                     var pageLength = this.pageLength;
                     var start = this.startRecord;
@@ -217,7 +121,7 @@
                 },
                 //按钮组
                 buttonGroup: {
-                    get: function() {
+                    get: function get() {
                         var buttons = this.buttons;
 
                         var group = [];
@@ -233,7 +137,7 @@
                     }
                 },
                 //当前按钮组，根据设置的每组的按钮数来计算
-                nowButtonGroup: function() {
+                nowButtonGroup: function nowButtonGroup() {
                     var buttonGroup = this.buttonGroup;
                     var buttonCount = this.buttonCount;
                     var nowPage = this.nowPage;
@@ -254,27 +158,27 @@
                 }
             },
             methods: {
-                addRow: function(e) {
+                addRow: function addRow(e) {
                     var number = makeRandomNumber(1);
                     var self = this;
                     var newRow = {
                         rowId: number[0],
-                        data: (function() {
+                        data: (function () {
                             var row = [];
                             for (var i = 0; i < self.thead.length; i++) {
                                 var cell = {
                                     data: self.thead[i].data,
                                     value: ""
-                                }
+                                };
                                 row.push(cell);
                             }
                             return row;
                         })()
-                    }
+                    };
 
                     if (self.mode == "server") {
                         //保存到服务器后再渲染到当前tbody中
-                        saveEdit(newRow,self);
+                        saveEdit(newRow, self);
                         self.tbody.unshift(newRow);
                     } else {
                         self.orignBody.unshift(newRow);
@@ -283,11 +187,11 @@
                         self.total = self.tbody.length;
                     }
                 },
-                createEvent: function(methodObj, e) {
+                createEvent: function createEvent(methodObj, e) {
                     var method = methodObj.method.bind(this);
                     method(e);
                 },
-                render: function(cell) {
+                render: function render(cell) {
                     var renderColumn = this.renderColumn;
 
                     if (!isEmpty(renderColumn) && !isEmpty(renderColumn[cell.data])) {
@@ -302,9 +206,9 @@
                  * @param  {[type]} row   修改的行
                  * @return {[type]}       [description]
                  */
-                changeOrignBodyRow: function(row) {
+                changeOrignBodyRow: function changeOrignBodyRow(row) {
                     var rowId = row.rowId;
-                    var findItem = this.orignBody.find(function(v) {
+                    var findItem = this.orignBody.find(function (v) {
                         return v.rowId == rowId;
                     });
                     this.$set(findItem, "data", row.data);
@@ -315,7 +219,7 @@
                  * @param  {[type]} e [description]
                  * @return {[type]}   [description]
                  */
-                tableClickPoxy: function(e) {
+                tableClickPoxy: function tableClickPoxy(e) {
                     var self = this;
                     var target = e.target;
                     var targetName = target.nodeName || "undefined";
@@ -325,7 +229,8 @@
                     //处理表头点击事件
                     if (targetName === "td" && className === "column") {
                         dealColumnClick(target, self);
-                    } else if (targetName == "span" && className == "content") { //单元格点击事件
+                    } else if (targetName == "span" && className == "content") {
+                        //单元格点击事件
                         if (self.edit == false) return;
                         var content = $(target);
                         if (content.html() == "-") {
@@ -336,14 +241,14 @@
                         input.val(content.html());
 
                         content.hide();
-                        input.one("blur", function() {
+                        input.one("blur", function () {
                             content.show();
                             $(this).hide();
                         });
                         input.show().select();
                     }
                 },
-                editCell: function(e, cell, row, column) {
+                editCell: function editCell(e, cell, row, column) {
                     var target = e.target;
                     var value = target.value;
                     if (isEmpty(column.checkRegxp) || new RegExp(column.checkRegxp).test(value)) {
@@ -359,7 +264,7 @@
                         this.changeOrignBodyRow(row);
                     }
                 },
-                pageLengthChange: function(e) {
+                pageLengthChange: function pageLengthChange(e) {
                     var target = e.target;
                     var mode = this.mode;
                     this.nowPage = 1;
@@ -372,7 +277,7 @@
 
                     fixedVtableHead(this);
                 },
-                buttonGroupClick: function(e) {
+                buttonGroupClick: function buttonGroupClick(e) {
                     var target = e.target;
                     var targetName = target.nodeName || "undefined";
                     targetName = targetName.toLowerCase();
@@ -407,7 +312,7 @@
 
                     fixedVtableHead(this);
                 },
-                searchEvent: function(e) {
+                searchEvent: function searchEvent(e) {
                     var target = e.target;
                     var searchContent = target.value;
 
@@ -435,8 +340,8 @@
                     var tbody = copyObj(this.orignBody);
                     var searchContent = this.searchObj.content;
 
-                    tbody = tbody.filter(function(value) {
-                        return value.data.some(function(value) {
+                    tbody = tbody.filter(function (value) {
+                        return value.data.some(function (value) {
                             return value.value.toString().indexOf(searchContent) != -1;
                         });
                     });
@@ -447,7 +352,7 @@
 
                     fixedVtableHead(this);
                 },
-                rowEdit: function(e, data) {
+                rowEdit: function rowEdit(e, data) {
                     var self = this;
                     var target = e.target;
                     var rowData = data;
@@ -455,12 +360,12 @@
                         return;
                     }
 
-                    $(self.el + " #defaultWindow").one("shown.bs.modal", function() {
+                    $(self.el + " #defaultWindow").one("shown.bs.modal", function () {
                         $(this).find(".modal-body").height(window.innerHeight * 0.6).css("overflow-y", "auto");
 
                         //为每个数据加上checkOk（是否符合自定意正则检测）的标志
                         var newRowData = copyObj(rowData);
-                        newRowData.data.filter(function(value, index, array) {
+                        newRowData.data.filter(function (value, index, array) {
                             if (isEmpty(value.checkOk)) {
                                 array[index].checkOk = true;
                             }
@@ -470,9 +375,9 @@
                         self.nowEditRow = newRowData;
 
                         //编辑框中保存按钮的事件
-                        $(this).find("button[save]").off("click").on("click", function() {
+                        $(this).find("button[save]").off("click").on("click", function () {
                             //将form中的所有变量赋值给rowData
-                            var allCheckOk = self.nowEditRow.data.every(function(value) {
+                            var allCheckOk = self.nowEditRow.data.every(function (value) {
                                 return value.checkOk;
                             });
                             if (!allCheckOk) {
@@ -495,7 +400,7 @@
                         });
                     }).modal("show");
                 },
-                rowDelete: function(e, data) {
+                rowDelete: function rowDelete(e, data) {
                     var self = this;
                     var target = e.target;
 
@@ -507,12 +412,12 @@
                         if (isEmpty(rowId)) {
                             return;
                         }
-                        var findItemIndex = this.orignBody.findIndex(function(v) {
+                        var findItemIndex = this.orignBody.findIndex(function (v) {
                             return v.rowId == rowId;
                         });
                         this.orignBody.splice(findItemIndex, 1);
 
-                        findItemIndex = this.tbody.findIndex(function(v) {
+                        findItemIndex = this.tbody.findIndex(function (v) {
                             return v.rowId == rowId;
                         });
                         this.tbody.splice(findItemIndex, 1);
@@ -521,7 +426,7 @@
                         fixedVtableHead(this);
                     }
                 },
-                jumpChange: function(e) {
+                jumpChange: function jumpChange(e) {
                     var target = e.target;
                     var value = target.value;
                     value = parseFloat(value);
@@ -550,7 +455,7 @@
                 },
                 reloadData: reloadData,
                 saveEdit: saveEdit,
-                editColumn: function(e, index, data) {
+                editColumn: function editColumn(e, index, data) {
                     var target = e.target;
                     var column = this.thead[index];
                     var cell = data;
@@ -570,13 +475,13 @@
             }
         });
 
-        vm.$nextTick(function() {
+        vm.$nextTick(function () {
             var self = this;
             var el = this.el;
             $(this.el + " .tableContainer").css("max-height", this.tableContainerMaxHeight + "px");
 
             if (this.mode == "person") {
-                this.$nextTick(function() {
+                this.$nextTick(function () {
                     fixedVtableHead(self);
                 });
             }
@@ -594,7 +499,7 @@
         var numberMap = {};
         var numberArray = [];
 
-        (function(count) {
+        (function (count) {
             var arg = arguments;
 
             if (count == 0) return;
@@ -607,7 +512,6 @@
             }
 
             arg.callee(count);
-
         })(count);
 
         return numberArray;
@@ -624,7 +528,7 @@
 
     function fixedVtableHead(vm) {
         if (!vm.fixedHead) return;
-        setTimeout(function() {
+        setTimeout(function () {
             $(vm.el + " #copyTable").remove();
             var obj = $(vm.el + " table");
             if (isEmpty(obj)) {
@@ -655,7 +559,7 @@
                 data: {
                     data: JSON.stringify(sendData)
                 },
-                success: function(data) {
+                success: function success(data) {
                     reloadData(self);
                 }
             });
@@ -683,7 +587,7 @@
                 data: {
                     data: JSON.stringify(row)
                 },
-                success: function(data) {
+                success: function success(data) {
                     var newRow = JSON.parse(data);
                     vm.$set(row, "data", newRow.data);
                 }
@@ -707,9 +611,7 @@
             console.error("thead配置错误");
             return false;
         }
-        table.orignBody = vtableConfig.tbody || [
-            { data: [{ value: "noData" }] }
-        ];
+        table.orignBody = vtableConfig.tbody || [{ data: [{ value: "noData" }] }];
         if (!(table.orignBody instanceof Array) || !(typeof table.orignBody[0] == "object")) {
             console.error("tbody配置错误");
             return false;
@@ -718,7 +620,7 @@
         // table.orignBody = table.tbody;
         table.edit = isEmpty(vtableConfig.edit) ? false : vtableConfig.edit; //是否开启编辑模式
         table.mode = vtableConfig.mode || "person"; //两种模式，客户端模式（person），服务器端模式（server）
-        if (!(typeof table.mode == "string") || (table.mode != "person" && table.mode != "server")) {
+        if (!(typeof table.mode == "string") || table.mode != "person" && table.mode != "server") {
             console.error("mode配置错误,选择值：person and server");
             return false;
         }
@@ -771,12 +673,12 @@
             show: true,
             functions: [{
                 name: "我的扩展按钮1",
-                method: function(e) {
+                method: function method(e) {
                     console.dir(this);
                 }
             }, {
                 name: "我的扩展按钮2",
-                method: function(e) {
+                method: function method(e) {
                     console.dir(this);
                 }
             }]
@@ -795,7 +697,7 @@
             pageLength: self.pageLength,
             searchObj: self.searchObj,
             sortObj: self.sortObj,
-            nowPage: self.nowPage,
+            nowPage: self.nowPage
         };
 
         $.ajax({
@@ -804,18 +706,18 @@
             data: {
                 data: JSON.stringify(sendData)
             },
-            beforeSend: function() {
+            beforeSend: function beforeSend() {
                 var shadow = document.createElement("div");
                 shadow.innerHTML = "<span>Loading...</span>";
                 shadow.className = "shadow";
 
                 //加上遮罩
                 $(self.el + " .tableContainer").append(shadow);
-                $(self.el + " .tableContainer").scroll(function(e) {
+                $(self.el + " .tableContainer").scroll(function (e) {
                     shadow.style.top = $(this).prop("scrollTop") + "px";
                 });
             },
-            success: function(data) {
+            success: function success(data) {
                 self.thead = data.thead;
                 self.tbody = data.tbody;
                 self.total = data.total;
@@ -834,11 +736,11 @@
                 $(self.el + " .tableContainer .shadow").remove();
 
                 //重新调整固定表头
-                self.$nextTick(function() {
+                self.$nextTick(function () {
                     fixedVtableHead(self);
                 });
             },
-            error: function() {
+            error: function error() {
                 $(self.el + " .tableContainer .shadow").remove();
             }
         });
@@ -867,17 +769,16 @@
         //根据sortObj对tbody排序
         var sortColumnIndex = self.sortObj[0].columnIndex;
         var sortWay = self.sortObj[0].sortWay;
-        self.tbody.sort(function(a, b) {
+        self.tbody.sort(function (a, b) {
             var avalue = a.data[sortColumnIndex].value;
             var bvalue = b.data[sortColumnIndex].value;
 
             //判断类型
-            if (/^[0-9]*$/.test(avalue) && /^[0-9]*$/.test(bvalue)) { //整数
-                if (sortWay == "desc")
-                    return bvalue - avalue;
-                else
-                    return avalue - bvalue;
-            } else { //字符串
+            if (/^[0-9]*$/.test(avalue) && /^[0-9]*$/.test(bvalue)) {
+                //整数
+                if (sortWay == "desc") return bvalue - avalue;else return avalue - bvalue;
+            } else {
+                //字符串
                 var length = avalue.length > bvalue.length ? avalue.length : bvalue.length;
                 for (var i = 0; i < length; i++) {
                     var a = avalue[i] == undefined ? 0 : avalue[i].charCodeAt(0);
@@ -913,7 +814,7 @@
         copyTable.attr("id", "copyTable");
 
         //先检查哪个父容器有滚动事件
-        tableParent = (function(parent) {
+        tableParent = (function (parent) {
             //首先将所有的父元素如果position=static的改为relative
             var isScroll = $(parent).css("overflow");
             if (parent != document.body && (isScroll == "" || isScroll == null || isScroll == undefined || isScroll == "hidden" || isScroll == "visible")) {
@@ -938,7 +839,7 @@
         //再设置每个表头的td和原表格的一样
         var tds = table.find("thead td");
         var copyTds = copyTable.find("thead td");
-        tds.each(function(index, obj) {
+        tds.each(function (index, obj) {
             var copyTd = $(copyTds[index]);
             var childs = copyTd[0].childNodes;
             var content;
@@ -959,7 +860,7 @@
         var initTop = calcEleToTargetOffset(table[0], tableParent[0], "offsetTop");
         // var maxHeight = initTop + table[0].offsetHeight;
 
-        tableParent[0].onscroll = function(e) {
+        tableParent[0].onscroll = function (e) {
             var scrollTop = tableParent[0].scrollTop;
             if (tableParent[0] == document.body) {
                 scrollTop = scrollTop == 0 ? window.scrollY : scrollTop;
@@ -978,7 +879,7 @@
             } else {
                 copyTable.hide();
             }
-        }
+        };
 
         function calcEleToTargetOffset(ele, target, offsetTopOrLeft) {
             if (ele == target || target == null) {
@@ -992,15 +893,15 @@
         }
 
         //滚动nowScrollTop距离
-        tableParent[0].scrollTop = (nowScrollTop + 1);
-        tableParent[0].scrollTop = (nowScrollTop - 1);
+        tableParent[0].scrollTop = nowScrollTop + 1;
+        tableParent[0].scrollTop = nowScrollTop - 1;
 
-        $(tableParent).one("resize", function(e) {
+        $(tableParent).one("resize", function (e) {
             copyTable.remove();
             fixedTableHead(query, tableParent[0].scrollTop);
         });
 
-        $(window).one("resize", function() {
+        $(window).one("resize", function () {
             copyTable.remove();
             fixedTableHead(query, tableParent[0].scrollTop);
         });
@@ -1010,7 +911,7 @@
         if (typeof obj == "function") {
             return false;
         }
-        if (obj == undefined || obj == null || (typeof obj) == "undefined" || obj.length <= 0 || obj.toString() == "NaN") {
+        if (obj == undefined || obj == null || typeof obj == "undefined" || obj.length <= 0 || obj.toString() == "NaN") {
             return true;
         } else if (typeof obj == "object") {
             var count = 0;
@@ -1018,8 +919,7 @@
                 count++;
             }
             return count == 0 ? true : false;
-        } else
-            return false;
+        } else return false;
     }
 
     window.makeVtable = makeVtable;

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <style type="text/css">
+    h1,
+    h2,
+    h4,
+    h5 {
+        border-left: 5px solid #74E772;
+        margin: 5px 0;
+        padding: 0 .5em;
+    }
+    
+    .content {
+        border-bottom: none;
+        font-size: 16px;
+    }
+    
+    .content>h4 {
+        font-weight: 800;
+    }
+    
+    .content>p {
+        padding-top: 1em;
+    }
+    
+    .content ol,
+    .content ul {
+        padding-top: 1em;
+        padding-left: 1em;
+    }
+    
+    .api>ul>li {
+        margin-top: 20px;
+    }
+    
+    .api pre {
+        margin-top: 1em;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>vtable</h1>
+            <h3><small>用最简洁的配置做最复杂的事</small></h3>
+        </div>
+        <div class="page-header content">
+            <h4>简单介绍</h4>
+            <p>此可配置式表格组件在vue2.0基础上编写，具有常规项目所需的一些功能：排序，过滤，翻页，设置页面显示条数，固定表头，指定列特殊渲染，单元格直接编辑，整行编辑等功能。</p>
+        </div>
+        <div class="page-header content">
+            <h4>模式</h4>
+            <ul>
+                <li>客户端模式：一次性加载所有数据，并对这些数据进行操作。 </li>
+                <li>服务端模式：需配置与服务端交互的url，表格每次的操作会与服务器通讯进行请求数据。</li>
+            </ul>
+        </div>
+        <div class="page-header content">
+            <h4>安装</h4>
+            <ol>
+                <li>下载此项目的压缩包，存放在，比如：d:/nodejs/vtable</li>
+                <li>然后在cmd中键入此地址，到达vtable目录下</li>
+                <li>键入npm install等待资源包下载完成</li>
+                <li>键入 hotnode ./bin/www</li>
+                <li>看到绿色 hotnode node process restarted 字样表示成功启动</li>
+                <li>浏览器输入localhost:3000/index.html查看效果</li>
+            </ol>
+        </div>
+        <div class="page-header content">
+            <h4>示例查看</h4>
+            <ul>
+                <li><a href="base.html">基本示例</a></li>
+                <li><a href="renderColumn.html">自定义列渲染</a></li>
+                <li><a href="editMode.html">编辑模式</a></li>
+                <li><a href="customEditWindow.html">自定义编辑框</a></li>
+                <li><a href="serverMode.html">服务端模式</a></li>
+            </ul>
+        </div>
+        <div class="page-header content api">
+            <h4>配置说明</h4>
+            <p>因为是在vue2.0,jquery基础上写的，所以需要依次引入jquery.js -> vue.js -> vtable.js</p>
+            <p>初始化表格用makeVtable这个函数,参数config配置如下</p>
+            <ul>
+                <li>thead：表头数据，结构：[{name:"xx",data:"xx"}]。默认：[{ name: "noData", data: "noData" }]
+                    <pre>thead:[
+    {
+        "name":"xxx",//显示在表格中的名称
+        "data"："xxx",//对应的字段名，与tbody中的data对应
+        "show": false,//是否显示该字段
+        "dataType": "int", //数据类型，int,float,boolean,string,text(长文本),date，暂时还没有利用到此字段，后续会增加
+        "checkRegxp": "^[0-9]*$", //检验规则正则表达式，适用于在form中做输入的检查
+        "errorMsg": "只能输入整数",//当检测不正确时的提示信息
+    }
+]</pre>
+                </li>
+                <li>tbody:表体数据，结构：[{rowId:xxx,data:[{value:"xxx",}]}]
+                    <pre>tbody:[
+    {
+        rowId:xxxxxxx,//一段随机数，用于标示该行
+        data:[//该数组的长度与thead中的数组长度对应，标示每行的数据
+                {
+                    "data":"xxx",//需要与thead中的data对应
+                    "value":"xxx",//该字段下的值
+                }
+        ]
+    }
+]</pre></li>
+                <li>mode：选择模式，默认值：person（客户端模式）。可选值：person 和 server(服务端模式)</li>
+                <li>fixedHead：是否固定表头，值：true or false</li>
+                <li>url:服务端模式下需要指定与服务器交互的url，这个url有put，post，delete三种模式
+                    <pre>
+$.ajax({
+    url:url,
+    type:"delete",//表示做删除操作
+    type:"put",//表示修改和新增操作
+    type:"post",//获取数据
+});
+
+服务端需要针对这个url做三个操作模式的识别。
+
+当type=post时，表格会向服务器发送以下数据
+{ 
+    pageLength: 50,//需要显示的条数
+    searchObj: { content: '' },//搜索数据
+    sortObj: [ { columnIndex: 0, sortWay: 'asc', data: '' } ],//排序数据
+    nowPage: 1 //请求第几页的数据
+}
+
+服务端根据获取到这些数据后做响应处理，需要返回：
+{
+    thead:[],//表头数据
+    tbody:[],//表体数据
+    total: 102,//对应的数据库中表里的总数据条数，不是指当前返回的条数
+    searchObj: searchObj,//之前接收的对象
+    nowPage: nowPage,//之前接收的对象
+    sortObj: sortObj,//之前接收的对象
+}</pre>
+                </li>
+                <li>edit:是否开启编辑模式，可选值：true or false</li>
+                <li>searchObj:搜索对象，表格搜索栏里输入的值封装成的对象。
+                    <pre>
+searchObj:{
+    content:"xxx"//搜索栏里输入的值
+}</pre>
+                </li>
+                <li>sortObj：排序对象。
+                    <pre>
+sortObj:[
+    { 
+        columnIndex: 0, //根据thead[columnIndex]列排序
+        sortWay: "asc", //排序方式，asc：升序，desc：降序
+        data: "",//需要与 thead[columnIndex].data对应
+    }
+]</pre>
+                </li>
+                <li>pageLength：每页显示的条数</li>
+                <li>nowPage：当前显示第几页</li>
+                <li>pageMenu：每页显示条数下拉选择框对应的数据
+                    <pre>pageMenu:[10,20,50,100]   默认值</pre>
+                </li>
+                <li>tableContainerMaxHeight：表格容器最大的高度</li>
+                <li>buttonCount：每个分页按钮组显示的按钮个数，默认5个</li>
+                <li>renderColumn：列渲染配置。
+                    <pre>
+//renderColumn对象里的每个key对应thead中的每个列对象的data            
+//以下配置表示将每行中name列的值加上“我的姓名是：”，$value表示原来的值
+renderColumn:{
+    "name":function(){
+        return "我的姓名是：$value";
+    },
+}
+假设name列的数据是：
+
+name
+-----------------
+name1,
+name2,
+name3,
+name4
+
+重新渲染后显示：
+
+name
+-------------
+我的姓名是name1
+我的姓名是name2
+我的姓名是name3
+我的姓名是name4
+
+
+详情见：<a href="renderColumn.html">配置自定意渲染列</a>
+</pre>
+                </li>
+                <li>expandButton：扩展按钮配置，有时候我们需要为表格增加更多的功能，比如：导出数据为指定格式，由于使用场景多样，逻辑复杂，需要自行配置
+                    <pre>
+expandButton:{
+    name: "功能菜单",//功能菜单名称
+    show: true,//是否显示
+    functions: [{
+        name: "我的扩展按钮1",//按钮名字
+        //method中的参数e表示点击事件对象，this表示此表格对应的vue实例对象
+        method: function(e) {
+            console.dir(this);
+        }
+    }, {
+        name: "我的扩展按钮2",
+        method: function(e) {
+            console.dir(this);
+        }
+    }]
+}
+</pre>
+                </li>
+                <li>更多有待完善中：</li>
+            </ul>
+        </div>
+    </div>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/vue2.js"></script>
+    <script type="text/javascript" src="js/less.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>
